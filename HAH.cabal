@@ -1,0 +1,49 @@
+name:                HAH
+version:             0.1.0.0
+synopsis:            Haskell Against Humanity
+description:         A Haskell library for playing Cards Against Humanity
+homepage:            https://github.com/adrianparvino/HAH
+license:             GPL-3
+license-file:        LICENSE
+author:              Adrian Parvin D. Ouano
+maintainer:          adrianparvino@gmail.com
+copyright:           2017 Adrian Parvin D. Ouano
+category:            Game
+build-type:          Simple
+extra-source-files:  README.md
+cabal-version:       >=1.10
+
+library
+  hs-source-dirs:      src
+  exposed-modules:     HAH
+  build-depends:       base >= 4.7 && < 5
+                     , singletons
+                     , clash-prelude
+                     , lens
+                     , mtl
+                     , finite-typelits
+                     , ghc-typelits-natnormalise
+                     , ghc-typelits-knownnat
+  default-language:    Haskell2010
+  ghc-options:         -fplugin=GHC.TypeLits.KnownNat.Solver -fplugin=GHC.TypeLits.Normalise
+
+executable MAH
+  hs-source-dirs:      app
+  main-is:             Main.hs
+  build-depends:       base >= 4.7 && < 5
+                     , HAH
+                     , Spock
+                     , aeson
+                     , bytestring
+                     , text
+                     , transformers
+                     , wreq
+                     , stm
+                     , warp
+                     , warp-tls
+  default-language:    Haskell2010
+  ghc-options:         -static
+  
+source-repository head
+  type:     git
+  location: https://github.com/adrianparvino/HAH
