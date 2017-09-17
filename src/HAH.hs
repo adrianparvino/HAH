@@ -22,31 +22,37 @@ module HAH (
 
 import Data.Maybe
 import Data.Finite
-import CLaSH.Sized.Vector
-import Control.Lens hiding ((:>))
+import Data.Vector.Sized
+import Control.Lens hiding (cons)
 import Control.Monad.State.Lazy
 import Control.Arrow
 import Data.Singletons.TypeLits
 import Data.Finite
+import Data.Dependent.Sum
+import Prelude hiding (cons)
 
-data Black n = Black String 
-data AnyBlack = forall (n :: Nat). AnyBlack (Black n) (SNat n)
+data Black (n :: Nat) = Black String 
+type AnyBlack = DSum Sing Black
 
 data Player = Player { hand :: [String], points :: Int }
 
-data HAH = forall v n.
+data HAH = forall n.
   HAH { _black :: [AnyBlack]
       , _white :: [String]
-      , _players :: Vec n Player
+      , _players :: Vector n Player
       , _czar :: Finite n
       }
 
 withGame :: Monad m => [AnyBlack] -> [String] -> StateT HAH m a -> m a
-withGame black white game = evalStateT game (HAH black white (singleton $ Player [] 0) (fromJust . packFinite $ 0))
--- makeGame :: [AnyBlack] -> [String] -> HAH
--- makeGame black white = HAH black white (singleton $ Player [] 0) (fromJust . packFinite $ 0)
+withGame black white game = evalStateT game state
+  where
+    state = HAH
+      black
+      white
+      (singleton $ Player [] 0)
+      (fromJust . packFinite $ 0)
 
-addPlayer :: MonadState HAH m => m ()
-addPlayer = modify $
-  \(HAH black white players czar) -> HAH black white (Player [] 0 :> players) (weaken czar)
+-- addPlayer :: MonadState HAH m => m ()
+-- addPlayer = modify $ \(HAH black white players czar) ->
+--   HAH black white (Player [] 0 `cons` players) (weaken czar)
 

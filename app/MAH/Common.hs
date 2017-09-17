@@ -65,7 +65,7 @@ data Recipient = Recipient
   } deriving Show
 
 data Message = Message
-  { message_mid :: T.Text
+  { message_mid :: Maybe T.Text
   , message_text :: Maybe T.Text
   , message_quick_reply :: Maybe QuickReply
   , message_attachments :: Maybe [Attachment]

@@ -14,9 +14,10 @@ in pkgs.haskellPackages.mkDerivation {
   buildDepends = [];
   libraryHaskellDepends = with pkgs.haskellPackages; [
     singletons ghc-typelits-natnormalise
-    ghc-typelits-knownnat clash-prelude
-    finite-typelits lens mtl
+    ghc-typelits-knownnat vector-sized
+    finite-typelits lens mtl dependent-sum
   ];
+
 #  buildTools = pkgs.stdenv.lib.optional runCompiler [pkgs.closurecompiler];
 #  
 #  postInstall =

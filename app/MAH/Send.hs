@@ -27,11 +27,11 @@ import qualified Data.Text as T
 import MAH.Common
 
 data Send = Send
-  { send_recipent :: Recipient
+  { send_recipient :: Recipient
   , send_message :: Maybe Message
   , send_sender_action :: Maybe T.Text
   , send_notification_type :: Maybe T.Text
   , send_tag :: Maybe T.Text
-  }
+  } deriving Show
 
 $(deriveJSON defaultOptions{fieldLabelModifier = drop 5, omitNothingFields = True} ''Send)

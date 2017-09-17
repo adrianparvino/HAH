@@ -34,6 +34,8 @@ import Data.List
 import Data.Monoid
 import Data.Traversable
 import qualified Data.Text as T
+import qualified Data.ByteString.Char8 as BS
+import qualified Data.ByteString.Lazy.Char8 as LBS
 
 import Web.Spock
 import Web.Spock.Config
@@ -45,17 +47,16 @@ import MAH.Common
 import qualified MAH.Webhook as Webhook
 import qualified MAH.Send as Send
 
-secretKey = "abcd"
+secretKey = "EAADE4GTC9ZBwBANMtZAw8gbqLwGtiRZClUBvNW2gSbQyYjRgISaq45wWRNBXJJeKjtrDjnBK2uFmVoXhhrtldOZCt9wY0jC3gDXmZAC7c2A2GVxumdPzW0EBRlZB6PrI3ZBIRtXlSgYgFrl0rN2wGHLNd6SZBSqKjquxUzRaTKe8WiJYyH2Q3e6W"
 tlsCert = "/etc/letsencrypt/live/mah.sadale.net/cert.pem"
 tlsKey  = "/etc/letsencrypt/live/mah.sadale.net/privkey.pem"
   
 main = do
   xs <- atomically $ newTVar []
   spockCfg <- defaultSpockCfg Nothing PCNoDatabase xs
-  app <- spockAsApp $ spock spockCfg system
-  runTLS (tlsSettings tlsCert tlsKey) (setPort 443 $ defaultSettings) app
+  runSpock 80 $ spock spockCfg system
 
-system :: SpockM conn sess (TVar [Webhook.Webhook]) ()
+system :: SpockM conn sess (TVar [Message]) ()
 system = do
   get "/messages" $ do
     xs <- getState
@@ -73,18 +74,20 @@ system = do
       Nothing ->
         return ()
   post "/webhook" $ do
-    body >>= liftIO . print . show
+    body >>= liftIO . putStrLn . BS.unpack
     runMaybeT $ do
-      (request :: Webhook.Webhook)  <- MaybeT $ jsonBody
-      xs <- lift getState
-      liftIO . atomically $ modifyTVar xs (request:)
+      (request :: Webhook.Webhook)  <- MaybeT jsonBody
+      liftIO $ print "Success"
       case request of
         (Webhook.Webhook "page" entries) -> for entries $
-          \(Webhook.Entry _ _ messaging) -> do
-            for messaging $
-              \(Webhook.MessagingMessage sender _ _ message) -> do
-                liftIO $ Wreq.post ("https://graph.facebook.com/me/messages?access_token=" <> secretKey)
-                  $ toJSON $ Send.Send (fromSender sender) (Just message) Nothing Nothing Nothing
-                return ()
+          \(Webhook.Entry _ _ messaging) -> for messaging $
+            \(Webhook.MessagingMessage sender _ _ message) -> do
+              tvar <- lift getState
+              liftIO . atomically $ modifyTVar tvar (message:)
+              let payload = Send.Send (fromSender sender) (Just message{message_mid=Nothing}) Nothing Nothing Nothing
+              liftIO . putStrLn . LBS.unpack $ "payload: " <> encode payload
+              liftIO . Wreq.post ("https://graph.facebook.com/me/messages?access_token=" <> secretKey)
+                $ toJSON payload
+              return ()
     return ()
 
